@@ -1,21 +1,43 @@
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import { getIngredients } from '../../services/ingredients/ingredientsSlice';
+import { useParams } from 'react-router-dom';
+import { getFeed } from '../../services/feed/feedSlice';
+import { getOrderByNumber } from '../../services/userOrders/userOrdersSlice';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const { number } = useParams<{ number: string }>();
 
-  const ingredients: TIngredient[] = [];
+  const feedOrders = useSelector(getFeed).orders;
+  const currentOrder = useSelector((state) => state.userOrders.currentOrder);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!number) return;
+
+    const isOrderExists = feedOrders.some(
+      (order) => order.number.toString() === number
+    );
+
+    if (!isOrderExists) {
+      dispatch(getOrderByNumber(Number(number)));
+    }
+  }, [dispatch, number, feedOrders]);
+
+  const orderData = useMemo(() => {
+    if (!number) return null;
+
+    return (
+      feedOrders.find((order) => order.number.toString() === number) ||
+      currentOrder ||
+      null
+    );
+  }, [feedOrders, currentOrder, number]);
+
+  const ingredients = useSelector(getIngredients);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
