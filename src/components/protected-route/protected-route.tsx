@@ -38,7 +38,8 @@ export const ProtectedRoute = ({
   }
 
   if (guestOnly && user) {
-    return <Navigate to='/' replace />;
+    const from = location.state?.from || { pathname: '/' };
+    return <Navigate replace to={from} />;
   }
 
   return children;

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
+import { v4 as uuidv4 } from 'uuid';
 
 export type TBurgerConstructorState = {
   bun: TConstructorIngredient | null;
@@ -15,20 +16,21 @@ const burgerConstructorSlice = createSlice({
   name: 'burgerConstructor',
   initialState,
   reducers: {
-    addIngredient: (state, action: PayloadAction<TIngredient>) => {
-      const newIngredient = mapIngredient(action.payload);
-
-      if (action.payload.type == 'bun') state.bun = newIngredient;
-      else state.ingredients.push(newIngredient);
+    addIngredient: {
+      reducer: (state, action: PayloadAction<TConstructorIngredient>) => {
+        if (action.payload.type == 'bun') state.bun = action.payload;
+        else state.ingredients.push(action.payload);
+      },
+      prepare: (ingredient: TIngredient) => mapIngredient(ingredient)
     },
     removeIngredient: (state, action: PayloadAction<string>) => {
       state.ingredients = state.ingredients.filter(
-        (item) => item._id !== action.payload
+        (item) => item.id !== action.payload
       );
     },
-    moveDownIngredient: (state, action: PayloadAction<TIngredient>) => {
+    moveDownIngredient: (state, action: PayloadAction<string>) => {
       const element = state.ingredients.find(
-        (item) => item._id == action.payload._id
+        (item) => item.id == action.payload
       );
       if (!element) return;
 
@@ -39,9 +41,9 @@ const burgerConstructorSlice = createSlice({
         state.ingredients.splice(ingredientIndex, 1)[0]
       );
     },
-    moveUpIngredient: (state, action: PayloadAction<TIngredient>) => {
+    moveUpIngredient: (state, action: PayloadAction<string>) => {
       const element = state.ingredients.find(
-        (item) => item._id == action.payload._id
+        (item) => item.id == action.payload
       );
       if (!element) return;
 
@@ -62,21 +64,8 @@ const burgerConstructorSlice = createSlice({
   }
 });
 
-function mapIngredient(ingredient: TIngredient): TConstructorIngredient {
-  return {
-    id: ingredient._id,
-    _id: ingredient._id,
-    name: ingredient.name,
-    type: ingredient.type,
-    proteins: ingredient.proteins,
-    fat: ingredient.fat,
-    carbohydrates: ingredient.carbohydrates,
-    calories: ingredient.calories,
-    price: ingredient.price,
-    image: ingredient.image,
-    image_large: ingredient.image_large,
-    image_mobile: ingredient.image_mobile
-  };
+function mapIngredient(ingredient: TIngredient) {
+  return { payload: { ...ingredient, id: uuidv4() } };
 }
 
 export const burgerConstructorReducer = burgerConstructorSlice.reducer;
